@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectFlow: Role & Permission Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #003d82;
+            --secondary: #00a8cc;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --spacing: 1rem;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: var(--spacing);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 3rem 2rem;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .role-btn {
+            padding: 1.5rem;
+            border: 2px solid var(--light);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: var(--dark);
+        }
+
+        .role-btn:hover {
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 168, 204, 0.2);
+        }
+
+        .role-btn.active {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+
+        .role-description {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .role-description h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .role-description p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .permissions-grid {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--light);
+            border-radius: 6px;
+            gap: 1rem;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .permission-icon {
+            font-size: 1.5rem;
+            min-width: 30px;
+        }
+
+        .permission-icon.allowed::before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .permission-icon.denied::before {
+            content: "✗";
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .permission-text {
+            flex: 1;
+            color: var(--dark);
+        }
+
+        .scenario-section {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .scenario-section h3 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .scenario-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .scenario-card p {
+            color: #555;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .scenario-options {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .option-btn {
+            padding: 1rem;
+            background: white;
+            border: 2px solid var(--light);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            border-color: var(--secondary);
+            background: rgba(0, 168, 204, 0.05);
+        }
+
+        .option-btn.selected {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            display: none;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .feedback.correct {
+            background: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+            border-left: 4px solid var(--success);
+        }
+
+        .feedback.incorrect {
+            background: rgba(231, 76, 60, 0.1);
+            color: #c0392b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .confidence-check {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 3rem;
+        }
+
+        .confidence-check h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .quiz-question {
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question p {
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .quiz-option {
+            padding: 0.8rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        .quiz-option.selected {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: white;
+        }
+
+        .submit-btn {
+            margin-top: 1.5rem;
+            padding: 1rem 2rem;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .result h4 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .result p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .role-selector {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Role & Permission Explorer</h1>
+            <p>Learn how ProjectFlow roles control what team members can do</p>
+        </div>
+
+        <div class="role-selector">
+            <button class="role-btn active" data-role="owner">Owner</button>
+            <button class="role-btn" data-role="admin">Admin</button>
+            <button class="role-btn" data-role="editor">Editor</button>
+            <button class="role-btn" data-role="viewer">Viewer</button>
+        </div>
+
+        <div class="role-description" id="roleDescription"></div>
+
+        <div class="permissions-grid" id="permissionsGrid"></div>
+
+        <div class="scenario-section">
+            <h3>💡 Scenario: Who should get this role?</h3>
+            <div id="scenarioContainer"></div>
+        </div>
+
+        <div class="confidence-check">
+            <h3>✅ Confidence Check</h3>
+            <div id="quizContainer"></div>
+            <button class="submit-btn" onclick="submitQuiz()">Check Answers</button>
+            <div class="result" id="quizResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const roleData = {
+            owner: {
+                title: "Owner",
+                description: "Full control over everything. Can delete projects, change all settings, manage team permissions. You likely have only 1-2 owners per project.",
+                emoji: "👑",
+                permissions: [
+                    { task: "Create projects", allowed: true },
+                    { task: "Edit project settings", allowed: true },
+                    { task: "Delete projects", allowed: true },
+                    { task: "Invite team members", allowed: true },
+                    { task: "Assign and change roles", allowed: true },
+                    { task: "View all project data", allowed: true },
+                    { task: "Create, edit, delete tasks", allowed: true }
+                ]
+            },
+            admin: {
+                title: "Admin",
+                description: "Can manage team, create projects, and modify most settings. Cannot delete projects (Owners only). Good for team leads and managers.",
+                emoji: "⚙️",
+                permissions: [
+                    { task: "Create projects", allowed: true },
+                    { task: "Edit project settings", allowed: true },
+                    { task: "Delete projects", allowed: false },
+                    { task: "Invite team members", allowed: true },
+                    { task: "Assign and change roles", allowed: true },
+                    { task: "View all project data", allowed: true },
+                    { task: "Create, edit, delete tasks", allowed: true }
+                ]
+            },
+            editor: {
+                title: "Editor",
+                description: "Can create and edit content (tasks, files, etc.) but cannot manage team or settings. Perfect for team members doing actual work.",
+                emoji: "✏️",
+                permissions: [
+                    { task: "Create projects", allowed: false },
+                    { task: "Edit project settings", allowed: false },
+                    { task: "Delete projects", allowed: false },
+                    { task: "Invite team members", allowed: false },
+                    { task: "Assign and change roles", allowed: false },
+                    { task: "View all project data", allowed: true },
+                    { task: "Create, edit, delete tasks", allowed: true }
+                ]
+            },
+            viewer: {
+                title: "Viewer",
+                description: "Read-only access. Can see everything but cannot edit anything. Perfect for executives, stakeholders, or clients.",
+                emoji: "👁️",
+                permissions: [
+                    { task: "Create projects", allowed: false },
+                    { task: "Edit project settings", allowed: false },
+                    { task: "Delete projects", allowed: false },
+                    { task: "Invite team members", allowed: false },
+                    { task: "Assign and change roles", allowed: false },
+                    { task: "View all project data", allowed: true },
+                    { task: "Create, edit, delete tasks", allowed: false }
+                ]
+            }
+        };
+
+        const scenarios = {
+            owner: [
+                {
+                    situation: "You're the project founder and will manage permissions.",
+                    correct: true,
+                    feedback: "✓ Correct! Owner is right for someone who needs full control."
+                }
+            ],
+            admin: [
+                {
+                    situation: "You hire a new team lead who will manage the team and create projects.",
+                    correct: true,
+                    feedback: "✓ Correct! Admin is perfect for team leads and managers."
+                }
+            ],
+            editor: [
+                {
+                    situation: "A designer joins your team. They need to create designs and tasks, but shouldn't change project settings.",
+                    correct: true,
+                    feedback: "✓ Correct! Editor lets them work without messing with settings."
+                }
+            ],
+            viewer: [
+                {
+                    situation: "Your CEO wants to see project status in reports but shouldn't edit anything.",
+                    correct: true,
+                    feedback: "✓ Correct! Viewer gives visibility without edit rights."
+                }
+            ]
+        };
+
+        const quizQuestions = [
+            {
+                question: "You hire a project coordinator. They'll create tasks and update status, but shouldn't delete projects. Which role?",
+                options: ["Owner", "Admin", "Editor", "Viewer"],
+                correct: 2
+            },
+            {
+                question: "Your design partner needs to see all projects but only in read-only mode. Which role?",
+                options: ["Owner", "Admin", "Editor", "Viewer"],
+                correct: 3
+            },
+            {
+                question: "A new manager will manage team members and create new projects. Which role?",
+                options: ["Owner", "Admin", "Editor", "Viewer"],
+                correct: 1
+            }
+        ];
+
+        function displayRole(role) {
+            const data = roleData[role];
+            
+            document.getElementById('roleDescription').innerHTML = `
+                <h3>${data.emoji} ${data.title}</h3>
+                <p>${data.description}</p>
+            `;
+
+            const permGrid = document.getElementById('permissionsGrid');
+            permGrid.innerHTML = data.permissions.map(perm => `
+                <div class="permission-item">
+                    <div class="permission-icon ${perm.allowed ? 'allowed' : 'denied'}"></div>
+                    <div class="permission-text">${perm.task}</div>
+                </div>
+            `).join('');
+
+            const scenario = scenarios[role][0];
+            const scenarioContainer = document.getElementById('scenarioContainer');
+            scenarioContainer.innerHTML = `
+                <div class="scenario-card">
+                    <p><strong>Scenario:</strong> ${scenario.situation}</p>
+                    <p>Should this person be assigned the <strong>${data.title}</strong> role?</p>
+                    <div class="scenario-options">
+                        <button class="option-btn" onclick="checkScenario(true)">Yes, that's right</button>
+                        <button class="option-btn" onclick="checkScenario(false)">No, different role</button>
+                    </div>
+                    <div class="feedback" id="scenarioFeedback"></div>
+                </div>
+            `;
+        }
+
+        function checkScenario(answer) {
+            const currentRole = document.querySelector('.role-btn.active').dataset.role;
+            const scenario = scenarios[currentRole][0];
+            const feedback = document.getElementById('scenarioFeedback');
+            const isCorrect = answer === scenario.correct;
+
+            feedback.textContent = scenario.feedback;
+            feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'} show`;
+            
+            if (isCorrect) {
+                feedback.textContent += " You understand this role well!";
+            } else {
+                feedback.textContent += " This person might need a different role. Review the permissions above.";
+            }
+        }
+
+        function displayQuiz() {
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = quizQuestions.map((q, idx) => `
+                <div class="quiz-question">
+                    <p><strong>Q${idx + 1}:</strong> ${q.question}</p>
+                    <div class="quiz-options">
+                        ${q.options.map((opt, optIdx) => `
+                            <button class="quiz-option" onclick="selectAnswer(${idx}, ${optIdx})" data-question="${idx}" data-answer="${optIdx}">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectAnswer(questionIdx, answerIdx) {
+            document.querySelectorAll(`[data-question="${questionIdx}"]`).forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`[data-question="${questionIdx}"][data-answer="${answerIdx}"]`).classList.add('selected');
+        }
+
+        function submitQuiz() {
+            let correct = 0;
+            quizQuestions.forEach((q, idx) => {
+                const selected = document.querySelector(`[data-question="${idx}"].selected`);
+                if (selected && parseInt(selected.dataset.answer) === q.correct) {
+                    correct++;
+                }
+            });
+
+            const result = document.getElementById('quizResult');
+            const score = Math.round((correct / quizQuestions.length) * 100);
+            result.classList.add('show');
+            
+            if (score === 100) {
+                result.innerHTML = `
+                    <h4>🎉 Perfect!</h4>
+                    <p>You scored ${score}% - You understand role-based permissions!</p>
+                    <p>You're ready to assign team members to ProjectFlow with confidence.</p>
+                `;
+            } else if (score >= 66) {
+                result.innerHTML = `
+                    <h4>✅ Great!</h4>
+                    <p>You scored ${score}% - You understand the basics of role-based permissions.</p>
+                    <p>Review the roles above and try again if you'd like to get a perfect score.</p>
+                `;
+            } else {
+                result.innerHTML = `
+                    <h4>📚 Keep Learning</h4>
+                    <p>You scored ${score}% - Let's review the role permissions above.</p>
+                    <p>Click each role button at the top to explore, then try the quiz again.</p>
+                `;
+            }
+        }
+
+        document.querySelectorAll('.role-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                displayRole(this.dataset.role);
+            });
+        });
+
+        displayRole('owner');
+        displayQuiz();
+    </script>
+</body>
+</html>

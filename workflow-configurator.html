@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectFlow: Workflow Configurator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #003d82;
+            --secondary: #00a8cc;
+            --success: #2ecc71;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .template-card {
+            border: 2px solid var(--light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .template-card:hover {
+            border-color: var(--secondary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 168, 204, 0.2);
+        }
+
+        .template-card.selected {
+            border-color: var(--secondary);
+            background: rgba(0, 168, 204, 0.05);
+        }
+
+        .template-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .template-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .template-card p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .workflow-flow {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .flow-stage {
+            background: white;
+            border: 2px solid var(--secondary);
+            border-radius: 6px;
+            padding: 1rem;
+            min-width: 120px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .flow-arrow {
+            color: var(--secondary);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .customization-section {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .custom-stage {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .stage-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--light);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .stage-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(0, 168, 204, 0.1);
+        }
+
+        .stage-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-add {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add:hover {
+            background: #0096b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .preview-section {
+            margin-top: 2rem;
+        }
+
+        .preview-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .board-column {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .column-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .task-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .success-message {
+            display: none;
+            background: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--success);
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .workflow-flow {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+
+            .templates-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Workflow Configurator</h1>
+            <p>Create a workflow that matches your team's process</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>1. Choose a Template</h2>
+                <div class="templates-grid">
+                    <div class="template-card selected" onclick="selectTemplate(this, 'kanban')">
+                        <div class="template-icon">📋</div>
+                        <h3>Kanban</h3>
+                        <p>Simple workflow: To Do → In Progress → Done</p>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate(this, 'agile')">
+                        <div class="template-icon">🚀</div>
+                        <h3>Agile Sprint</h3>
+                        <p>Backlog → Sprint → Review → Retro</p>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate(this, 'custom')">
+                        <div class="template-icon">🛠️</div>
+                        <h3>Custom</h3>
+                        <p>Build your own workflow from scratch</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>2. Preview Your Workflow</h2>
+                <div class="workflow-flow" id="workflowFlow"></div>
+            </div>
+
+            <div class="section">
+                <h2>3. Customize (Optional)</h2>
+                <div class="customization-section">
+                    <p style="margin-bottom: 1rem; color: #666;">Add, remove, or rename workflow stages:</p>
+                    <div id="customStages"></div>
+                    <button class="btn-add" onclick="addStage()">+ Add Stage</button>
+                </div>
+            </div>
+
+            <div class="section preview-section">
+                <h2>4. See How It Works</h2>
+                <p style="color: #666; margin-bottom: 1.5rem;">This is how your team will see tasks moving through the workflow:</p>
+                <div class="preview-board" id="previewBoard"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-save" onclick="saveWorkflow()">✓ Save Workflow</button>
+            </div>
+            <div class="success-message" id="successMessage">
+                ✨ Workflow saved! Your team can now use this workflow to organize their work.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplate = 'kanban';
+        let stages = ['To Do', 'In Progress', 'Done'];
+        let stageColors = ['#e74c3c', '#f39c12', '#2ecc71'];
+
+        const templates = {
+            kanban: {
+                stages: ['To Do', 'In Progress', 'Done'],
+                colors: ['#e74c3c', '#f39c12', '#2ecc71'],
+                description: 'Perfect for continuous workflow'
+            },
+            agile: {
+                stages: ['Backlog', 'Sprint', 'In Progress', 'Review', 'Done'],
+                colors: ['#95a5a6', '#e74c3c', '#f39c12', '#3498db', '#2ecc71'],
+                description: 'Built for 2-week sprints'
+            },
+            custom: {
+                stages: ['Stage 1'],
+                colors: ['#3498db'],
+                description: 'Build your own'
+            }
+        };
+
+        function selectTemplate(el, template) {
+            document.querySelectorAll('.template-card').forEach(card => card.classList.remove('selected'));
+            el.classList.add('selected');
+            currentTemplate = template;
+            stages = [...templates[template].stages];
+            stageColors = [...templates[template].colors];
+            renderWorkflow();
+            renderCustomization();
+            renderPreview();
+        }
+
+        function renderWorkflow() {
+            const flow = document.getElementById('workflowFlow');
+            flow.innerHTML = stages.map((stage, idx) => `
+                ${idx > 0 ? '<div class="flow-arrow">→</div>' : ''}
+                <div class="flow-stage" style="border-color: ${stageColors[idx] || '#00a8cc'}">${stage}</div>
+            `).join('');
+        }
+
+        function renderCustomization() {
+            const container = document.getElementById('customStages');
+            container.innerHTML = stages.map((stage, idx) => `
+                <div class="custom-stage">
+                    <input type="text" class="stage-input" value="${stage}" onchange="updateStage(${idx}, this.value)">
+                    <input type="color" class="stage-color" value="${stageColors[idx]}" onchange="updateColor(${idx}, this.value)">
+                    <button class="btn-remove" onclick="removeStage(${idx})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function renderPreview() {
+            const preview = document.getElementById('previewBoard');
+            preview.innerHTML = stages.map((stage, idx) => `
+                <div class="board-column">
+                    <div class="column-header" style="border-bottom-color: ${stageColors[idx]}">${stage}</div>
+                    <div class="task-card">Sample task 1</div>
+                    ${idx === 1 ? '<div class="task-card">Sample task 2</div>' : ''}
+                    ${idx === 0 ? '<div class="task-card">Sample task 3</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateStage(idx, value) {
+            stages[idx] = value || `Stage ${idx + 1}`;
+            renderWorkflow();
+            renderPreview();
+        }
+
+        function updateColor(idx, color) {
+            stageColors[idx] = color;
+            renderWorkflow();
+            renderPreview();
+        }
+
+        function addStage() {
+            stages.push(`Stage ${stages.length + 1}`);
+            stageColors.push('#3498db');
+            renderWorkflow();
+            renderCustomization();
+            renderPreview();
+        }
+
+        function removeStage(idx) {
+            if (stages.length > 1) {
+                stages.splice(idx, 1);
+                stageColors.splice(idx, 1);
+                renderWorkflow();
+                renderCustomization();
+                renderPreview();
+            } else {
+                alert('You need at least one stage in your workflow');
+            }
+        }
+
+        function saveWorkflow() {
+            const message = document.getElementById('successMessage');
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
+        }
+
+        renderWorkflow();
+        renderCustomization();
+        renderPreview();
+    </script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectFlow: Scenario-Based Learning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #003d82;
+            --secondary: #00a8cc;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--light);
+            border-radius: 3px;
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--secondary);
+            transition: width 0.3s ease;
+        }
+
+        .scenario {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .scenario h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .scenario p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .scenario-context {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--secondary);
+            margin: 1.5rem 0;
+        }
+
+        .scenario-context h3 {
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .choices {
+            display: grid;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .choice-btn {
+            padding: 1.5rem;
+            border: 2px solid var(--light);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .choice-btn:hover {
+            border-color: var(--secondary);
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0, 168, 204, 0.2);
+        }
+
+        .choice-btn.correct {
+            border-color: var(--success);
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .choice-btn.incorrect {
+            border-color: var(--danger);
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .feedback {
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: none;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.correct {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success);
+            color: #27ae60;
+        }
+
+        .feedback.incorrect {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger);
+            color: #c0392b;
+        }
+
+        .feedback h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback p {
+            line-height: 1.6;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0096b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: #d5dbdb;
+        }
+
+        .completion-screen {
+            text-align: center;
+        }
+
+        .completion-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .completion-screen h2 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .completion-screen p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .summary-stats {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🎓 Scenario-Based Learning</h1>
+                <p>Navigate real-world situations and learn best practices</p>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div id="scenarioContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = [
+            {
+                id: 1,
+                title: "Scenario 1: You're Starting a New Project",
+                situation: "Your team just landed a new client project. You're the project lead and need to set everything up in ProjectFlow. You want to get the team productive quickly, but you also need to make sure everyone knows what they're doing.",
+                context: "Team size: 5 people\nTimeline: 2-week sprint\nComplexity: Medium",
+                question: "What should you do first?",
+                choices: [
+                    {
+                        text: "A) Create the project, set up the workflow to match your team's process, then invite everyone",
+                        correct: true,
+                        feedback: "✓ Correct! Setting up the structure first ensures your team has a clear framework when they arrive. This prevents confusion and reduces onboarding time."
+                    },
+                    {
+                        text: "B) Invite everyone immediately, then work together to figure out the workflow",
+                        correct: false,
+                        feedback: "✗ Not quite. While collaboration is good, inviting people before the structure exists means they'll be confused about how to use the project."
+                    },
+                    {
+                        text: "C) Create the project, add all tasks manually, then invite the team",
+                        correct: false,
+                        feedback: "✗ This takes too long and removes your team's input on what tasks actually need to be done. They know the work better than you do."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Scenario 2: Assigning Team Roles",
+                situation: "You're setting up permissions for your team. You have: a designer, a developer, a quality assurance person, and a project manager (who is also you). You want everyone to be able to do their work without worrying about breaking things.",
+                context: "You're responsible for overseeing the project.\nYour team is relatively new to ProjectFlow.\nYou want to trust them with autonomy.",
+                question: "What roles should you assign?",
+                choices: [
+                    {
+                        text: "A) Everyone gets Editor role—they can create and edit tasks but can't change project settings",
+                        correct: true,
+                        feedback: "✓ Perfect! Editor gives everyone the autonomy to work while protecting critical settings. You keep Admin or Owner to manage team and settings."
+                    },
+                    {
+                        text: "B) Everyone gets Viewer role so nobody can accidentally break anything",
+                        correct: false,
+                        feedback: "✗ This is too restrictive. Viewers can't create or edit tasks, which paralyzes your team."
+                    },
+                    {
+                        text: "C) Everyone gets Admin role so you're all equal",
+                        correct: false,
+                        feedback: "✗ Too permissive. Multiple admins can accidentally delete the project or change settings they shouldn't."
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "Scenario 3: Your Team is Confused About Status Updates",
+                situation: "Halfway through the sprint, you notice your team isn't consistently updating task status. Some tasks sit in 'In Progress' for days without movement. The team says they don't understand what each status means.",
+                context: "You're using a Kanban workflow: To Do → In Progress → Review → Done.\nYour team is distributed across 3 time zones.\nYou need better visibility into progress.",
+                question: "What should you do?",
+                choices: [
+                    {
+                        text: "A) Create a clear guide explaining what each status means and when to move tasks between them",
+                        correct: true,
+                        feedback: "✓ Excellent! Clear definitions prevent confusion and ensure consistent status updates. Document it (wiki, Confluence, or a pinned message) so everyone can reference it."
+                    },
+                    {
+                        text: "B) Check in with each person daily to ask for status updates",
+                        correct: false,
+                        feedback: "✗ This is manual and doesn't scale. You're creating a bottleneck instead of solving the root cause (unclear statuses)."
+                    },
+                    {
+                        text: "C) Change your workflow to have fewer statuses (To Do, Done)",
+                        correct: false,
+                        feedback: "✗ While simpler is good, losing 'In Progress' and 'Review' visibility will hurt your ability to track progress and identify blockers."
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "Scenario 4: Client Wants to See Project Updates",
+                situation: "Your client wants to see project progress weekly, but they don't need to edit anything. They want transparency without being able to accidentally change things. You need to decide how to give them access.",
+                context: "Client is non-technical.\nThey need weekly status updates.\nYou want to protect your team's working space.",
+                question: "What's the best approach?",
+                choices: [
+                    {
+                        text: "A) Invite them as Viewer—they can see everything but can't edit anything",
+                        correct: true,
+                        feedback: "✓ Perfect! Viewer gives them full transparency while protecting your project. They can see all tasks, status, and progress without risk."
+                    },
+                    {
+                        text: "B) Don't invite them to ProjectFlow; send them weekly email reports instead",
+                        correct: false,
+                        feedback: "✗ While safe, this is manual work and doesn't give them real-time visibility. They might want to check status anytime."
+                    },
+                    {
+                        text: "C) Invite them as Editor so they can provide feedback directly in the project",
+                        correct: false,
+                        feedback: "✗ Editors can modify tasks, which could mess up your team's work. For feedback, keep communication in email or a separate channel."
+                    }
+                ]
+            }
+        ];
+
+        let currentScenario = 0;
+        let correctCount = 0;
+
+        function renderScenario() {
+            if (currentScenario >= scenarios.length) {
+                showCompletion();
+                return;
+            }
+
+            const scenario = scenarios[currentScenario];
+            const container = document.getElementById('scenarioContainer');
+
+            container.innerHTML = `
+                <div class="scenario">
+                    <h2>${scenario.title}</h2>
+                    <p>${scenario.situation}</p>
+                    <div class="scenario-context">
+                        <h3>📋 Context</h3>
+                        <p>${scenario.context.split('\n').join('<br>')}</p>
+                    </div>
+                    <h3 style="color: var(--primary); margin: 1.5rem 0 1rem;">${scenario.question}</h3>
+                    <div class="choices">
+                        ${scenario.choices.map((choice, idx) => `
+                            <button class="choice-btn" onclick="selectChoice(${idx})">${choice.text}</button>
+                        `).join('')}
+                    </div>
+                    <div class="feedback" id="feedback"></div>
+                    <div class="button-group" id="buttonGroup" style="display: none;">
+                        <button class="btn btn-primary" onclick="nextScenario()">Next Scenario →</button>
+                    </div>
+                </div>
+            `;
+
+            updateProgress();
+        }
+
+        function selectChoice(idx) {
+            const scenario = scenarios[currentScenario];
+            const choice = scenario.choices[idx];
+            const feedback = document.getElementById('feedback');
+            const buttons = document.querySelectorAll('.choice-btn');
+
+            buttons.forEach(btn => btn.disabled = true);
+            buttons[idx].classList.add(choice.correct ? 'correct' : 'incorrect');
+
+            feedback.innerHTML = `
+                <h3>${choice.correct ? '✨ Correct!' : '📚 Not quite'}</h3>
+                <p>${choice.feedback}</p>
+            `;
+            feedback.classList.add('show', choice.correct ? 'correct' : 'incorrect');
+
+            if (choice.correct) {
+                correctCount++;
+            }
+
+            document.getElementById('buttonGroup').style.display = 'flex';
+        }
+
+        function nextScenario() {
+            currentScenario++;
+            renderScenario();
+        }
+
+        function updateProgress() {
+            const progress = ((currentScenario) / scenarios.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function showCompletion() {
+            const container = document.getElementById('scenarioContainer');
+            const percentage = Math.round((correctCount / scenarios.length) * 100);
+
+            container.innerHTML = `
+                <div class="completion-screen">
+                    <div class="completion-icon">🎉</div>
+                    <h2>You Completed the Learning Activity!</h2>
+                    <p>You've practiced real-world scenarios and learned best practices for setting up and managing projects in ProjectFlow.</p>
+                    
+                    <div class="summary-stats">
+                        <div class="stat">
+                            <div class="stat-number">${correctCount}/${scenarios.length}</div>
+                            <div class="stat-label">Scenarios Answered Correctly</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">${percentage}%</div>
+                            <div class="stat-label">Success Rate</div>
+                        </div>
+                    </div>
+
+                    <p>${percentage === 100 ? "🏆 Perfect score! You're ready to be a ProjectFlow expert!" : percentage >= 75 ? "✅ Great job! You understand the key concepts." : "📚 Good effort! Review the scenarios and try again."}</p>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('progressFill').style.width = '100%';
+        }
+
+        renderScenario();
+    </script>
+</body>
+</html>
